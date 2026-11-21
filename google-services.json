@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "495081496722",
+    "firebase_url": "https://hishab-khata-b3043-default-rtdb.firebaseio.com",
+    "project_id": "hishab-khata-b3043",
+    "storage_bucket": "hishab-khata-b3043.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:495081496722:android:db824788a610981e96064b",
+        "android_client_info": {
+          "package_name": "com.bestu.hishabkhata"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "495081496722-8s00p6l806j7km3ns6k2a5vsv74qs99v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCk8jj3keC8Of7s0qUH0FixPYomQpZ8sBM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "495081496722-8s00p6l806j7km3ns6k2a5vsv74qs99v.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

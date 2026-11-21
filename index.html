@@ -1,0 +1,2003 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>বাকি খাতা ও ব্যবসায় হিসাব</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<style>
+  :root {
+    --red: #C62828;
+    --red-dark: #8E0000;
+    --red-light: #FFEBEE;
+    --green: #2E7D32;
+    --green-light: #E8F5E9;
+    --blue: #1565C0;
+    --blue-light: #E3F2FD;
+    --amber: #EF6C00;
+    --amber-light: #FFF3E0;
+    --bg: #F4F5F7;
+    --card: #FFFFFF;
+    --text: #1F2937;
+    --muted: #6B7280;
+    --border: #E5E7EB;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    font-family: 'Hind Siliguri', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding-bottom: 74px;
+    font-size: 14px;
+  }
+  button, input, select, textarea { font-family: inherit; }
+  .hidden { display: none !important; }
+
+  /* Login Screen */
+  #loginScreen {
+    position: fixed; inset: 0; z-index: 9999;
+    background: linear-gradient(155deg, #B71C1C 0%, #D32F2F 55%, #8E0000 100%);
+    display: flex; align-items: center; justify-content: center; padding: 18px;
+    overflow-y: auto;
+  }
+  .login-card {
+    background: #fff; width: 100%; max-width: 390px; border-radius: 18px;
+    padding: 24px 20px; box-shadow: 0 18px 40px rgba(0,0,0,0.28);
+  }
+  .login-logo {
+    width: 58px; height: 58px; border-radius: 16px; background: var(--red-light);
+    color: var(--red); display: flex; align-items: center; justify-content: center;
+    font-size: 28px; margin: 0 auto 10px; font-weight: 700;
+  }
+  .login-title { text-align: center; font-size: 21px; font-weight: 700; margin: 0; color: var(--text); }
+  .login-sub { text-align: center; font-size: 13px; color: var(--muted); margin: 4px 0 18px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #374151; }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 10px 12px; border: 1.5px solid var(--border);
+    border-radius: 10px; font-size: 14px; outline: none; background: #fff;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--red); }
+  .btn {
+    border: none; border-radius: 10px; padding: 11px 14px; font-size: 14px;
+    font-weight: 600; cursor: pointer; display: inline-flex; align-items: center;
+    justify-content: center; gap: 6px; transition: opacity .15s;
+  }
+  .btn:active { opacity: 0.85; }
+  .btn-primary { background: var(--red); color: #fff; }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-blue { background: var(--blue); color: #fff; }
+  .btn-outline { background: #fff; color: var(--text); border: 1.5px solid var(--border); }
+  .btn-soft-red { background: var(--red-light); color: var(--red); }
+  .btn-soft-green { background: var(--green-light); color: var(--green); }
+  .btn-block { width: 100%; }
+  .demo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .demo-btn {
+    background: #F9FAFB; border: 1px dashed #D1D5DB; border-radius: 10px;
+    padding: 8px; font-size: 12px; color: #374151; cursor: pointer; text-align: center;
+  }
+  .demo-btn strong { display: block; color: var(--red); font-size: 13px; }
+
+  /* Header */
+  .topbar {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--red); color: #fff;
+    padding: 11px 14px; display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.14);
+  }
+  .shop-title-wrap { display: flex; flex-direction: column; min-width: 0; }
+  .shop-title { font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sync-pill {
+    font-size: 11px; opacity: 0.92; display: inline-flex; align-items: center; gap: 4px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: #A5D6A7; }
+  .dot.off { background: #FFD54F; }
+  .top-actions { display: flex; align-items: center; gap: 6px; }
+  .top-btn {
+    background: rgba(255,255,255,0.18); color: #fff; border: none; border-radius: 8px;
+    padding: 6px 9px; font-size: 12px; font-weight: 600; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+
+  /* Notice banner */
+  .notice-bar {
+    background: #FFF8E1; color: #8D6E63; border-bottom: 1px solid #FFE082;
+    padding: 7px 14px; font-size: 12.5px; display: flex; align-items: center; gap: 6px;
+  }
+
+  /* Main Container */
+  .container { max-width: 540px; margin: 0 auto; padding: 12px; }
+
+  /* Summary Cards */
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .sum-card {
+    background: var(--card); border-radius: 13px; padding: 12px 13px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06); border-left: 4px solid var(--border);
+  }
+  .sum-card.green { border-left-color: var(--green); }
+  .sum-card.red { border-left-color: var(--red); }
+  .sum-card.blue { border-left-color: var(--blue); }
+  .sum-card.amber { border-left-color: var(--amber); }
+  .sum-label { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .sum-val { font-size: 19px; font-weight: 700; margin-top: 2px; }
+  .text-green { color: var(--green); }
+  .text-red { color: var(--red); }
+  .text-blue { color: var(--blue); }
+  .text-amber { color: var(--amber); }
+
+  /* Search & Filter */
+  .search-box {
+    display: flex; gap: 8px; margin-bottom: 10px;
+  }
+  .search-box input {
+    flex: 1; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--border);
+    background: #fff; font-size: 14px; outline: none;
+  }
+  .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 8px; }
+  .chip {
+    padding: 5px 12px; border-radius: 20px; background: #fff; border: 1px solid var(--border);
+    font-size: 12.5px; font-weight: 600; color: var(--muted); white-space: nowrap; cursor: pointer;
+  }
+  .chip.active { background: var(--red); color: #fff; border-color: var(--red); }
+
+  /* List Cards */
+  .list-card {
+    background: #fff; border-radius: 13px; overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 12px;
+  }
+  .item-row {
+    padding: 12px 13px; border-bottom: 1px solid #F3F4F6;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer;
+  }
+  .item-row:last-child { border-bottom: none; }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%; background: var(--red-light);
+    color: var(--red); font-weight: 700; font-size: 16px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .avatar.sup { background: var(--blue-light); color: var(--blue); }
+  .item-info { flex: 1; min-width: 0; }
+  .item-name { font-weight: 700; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-sub { font-size: 12px; color: var(--muted); }
+  .item-right { text-align: right; flex-shrink: 0; }
+  .item-amt { font-weight: 700; font-size: 15px; }
+  .badge {
+    display: inline-block; padding: 2px 7px; border-radius: 6px; font-size: 11px; font-weight: 600;
+  }
+  .badge-green { background: var(--green-light); color: var(--green); }
+  .badge-red { background: var(--red-light); color: var(--red); }
+  .badge-blue { background: var(--blue-light); color: var(--blue); }
+  .badge-amber { background: var(--amber-light); color: var(--amber); }
+
+  /* FAB */
+  .fab {
+    position: fixed; right: 16px; bottom: 78px; z-index: 90;
+    background: var(--red); color: #fff; border: none; border-radius: 28px;
+    padding: 12px 18px; font-size: 14px; font-weight: 700;
+    box-shadow: 0 6px 18px rgba(198,40,40,0.38); cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+
+  /* Bottom Navigation */
+  .bottom-nav {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 100;
+    background: #fff; border-top: 1px solid var(--border);
+    display: grid; grid-template-columns: repeat(5, 1fr); height: 62px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+  }
+  .nav-btn {
+    border: none; background: none; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 2px;
+    font-size: 11px; font-weight: 600; color: var(--muted); cursor: pointer; padding: 4px 2px;
+  }
+  .nav-btn .ico { font-size: 19px; line-height: 1; }
+  .nav-btn.active { color: var(--red); }
+
+  /* Cashbox Tallykhata style */
+  .cash-hero {
+    background: linear-gradient(135deg, #1B5E20, #2E7D32);
+    color: #fff; border-radius: 15px; padding: 16px; margin-bottom: 12px;
+  }
+  .cash-hero-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .cash-val { font-size: 27px; font-weight: 700; margin: 4px 0; }
+  .cash-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .cash-action {
+    background: #fff; border: 1px solid var(--border); border-radius: 12px;
+    padding: 11px 6px; text-align: center; cursor: pointer; font-weight: 600; font-size: 12.5px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .cash-action span.ci { font-size: 20px; }
+
+  /* Customer Detail Overlay (Tallykhata style) */
+  .overlay-screen {
+    position: fixed; inset: 0; z-index: 300; background: var(--bg);
+    overflow-y: auto; padding-bottom: 28px;
+  }
+  .ledger-header {
+    position: sticky; top: 0; z-index: 10; background: #fff;
+    border-bottom: 1px solid var(--border); padding: 10px 12px;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .ledger-back {
+    border: none; background: #F3F4F6; width: 34px; height: 34px; border-radius: 50%;
+    font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .entry-box {
+    background: #fff; margin: 10px 12px; padding: 13px; border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .dual-input { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .in-box {
+    border: 1.5px solid var(--border); border-radius: 11px; padding: 8px 10px; background: #FAFAFA;
+  }
+  .in-box.red { border-color: #EF9A9A; background: #FFF5F5; }
+  .in-box.green { border-color: #A5D6A7; background: #F4FBF5; }
+  .in-box label { display: block; font-size: 11.5px; font-weight: 700; margin-bottom: 2px; }
+  .in-box input {
+    width: 100%; border: none; background: transparent; font-size: 18px; font-weight: 700; outline: none;
+  }
+  .entry-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+  .pill-btn {
+    border: 1px solid var(--border); background: #F9FAFB; border-radius: 20px;
+    padding: 5px 11px; font-size: 12px; font-weight: 600; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 0; border-top: 1px solid #F3F4F6; margin-top: 8px;
+  }
+
+  /* Modal */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,0.52);
+    display: flex; align-items: center; justify-content: center; padding: 14px;
+  }
+  .modal {
+    background: #fff; width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto;
+    border-radius: 16px; padding: 18px; box-shadow: 0 14px 34px rgba(0,0,0,0.24);
+  }
+  .modal-head {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+  }
+  .modal-head h3 { margin: 0; font-size: 17px; }
+  .close-x {
+    border: none; background: #F3F4F6; width: 30px; height: 30px; border-radius: 50%;
+    font-size: 17px; cursor: pointer;
+  }
+
+  /* Tabs inside Admin Panel */
+  .sub-tabs { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px; padding-bottom: 4px; }
+  .sub-tab {
+    border: none; background: #E5E7EB; color: #374151; border-radius: 9px;
+    padding: 7px 12px; font-size: 12.5px; font-weight: 600; white-space: nowrap; cursor: pointer;
+  }
+  .sub-tab.active { background: var(--red); color: #fff; }
+
+  /* Card block */
+  .card {
+    background: #fff; border-radius: 13px; padding: 13px; margin-bottom: 11px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .row-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .small-btn {
+    border: none; border-radius: 7px; padding: 5px 9px; font-size: 11.5px; font-weight: 600; cursor: pointer;
+  }
+  .tx-thumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); cursor: pointer; }
+  .empty-state { text-align: center; padding: 28px 16px; color: var(--muted); font-size: 13.5px; }
+  .toast {
+    position: fixed; left: 50%; bottom: 82px; transform: translateX(-50%); z-index: 9999;
+    background: #1F2937; color: #fff; padding: 9px 16px; border-radius: 24px;
+    font-size: 13px; font-weight: 600; box-shadow: 0 6px 16px rgba(0,0,0,0.24);
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">খাতা</div>
+    <h1 class="login-title" id="loginShopTitle">বাকি খাতা ও ব্যবসায় হিসাব</h1>
+    <p class="login-sub">Firebase ক্লাউড সিঙ্কসহ নিরাপদ লগইন</p>
+    <div class="field">
+      <label>ইউজারনেম</label>
+      <input id="loginUser" type="text" placeholder="যেমন: admin বা user" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>পাসওয়ার্ড (ইংরেজি বা বাংলা অঙ্ক)</label>
+      <input id="loginPass" type="password" placeholder="****">
+    </div>
+    <button class="btn btn-primary btn-block" onclick="doLogin()">লগইন করুন</button>
+    <div class="demo-row">
+      <button class="demo-btn" onclick="quickLogin('admin','1234')">
+        <strong>অ্যাডমিন ডেমো</strong>admin / 1234
+      </button>
+      <button class="demo-btn" onclick="quickLogin('user','1234')">
+        <strong>ইউজার ডেমো</strong>user / 1234
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="shop-title-wrap">
+    <div class="shop-title" id="topShopName">বাকি খাতা ও ব্যবসায় হিসাব</div>
+    <div class="sync-pill"><span class="dot" id="syncDot"></span><span id="syncText">Firebase সংযুক্ত হচ্ছে...</span></div>
+  </div>
+  <div class="top-actions">
+    <button class="top-btn" id="panelSwitchBtn" onclick="openRolePanel()">প্যানেল</button>
+    <button class="top-btn" onclick="openSettingsModal()">⚙️</button>
+    <button class="top-btn" onclick="doLogout()">লগআউট</button>
+  </div>
+</div>
+
+<div id="homeNoticeBar" class="notice-bar hidden">
+  <span>📢</span><span id="homeNoticeText"></span>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+
+  <!-- TAB 1: BAKI KHATA -->
+  <section id="tab-baki">
+    <div class="summary-grid">
+      <div class="sum-card green">
+        <div class="sum-label">মোট পাবো (কাস্টমার)</div>
+        <div class="sum-val text-green" id="totalPabo">৳ ০</div>
+      </div>
+      <div class="sum-card red">
+        <div class="sum-label">মোট দেবো (সাপ্লায়ার)</div>
+        <div class="sum-val text-red" id="totalDebo">৳ ০</div>
+      </div>
+    </div>
+    <div class="search-box">
+      <input id="bakiSearch" type="text" placeholder="কাস্টমার বা মোবাইল খুঁজুন..." oninput="renderBaki()">
+      <button class="btn btn-outline" onclick="exportBakiCSV()">CSV</button>
+    </div>
+    <div class="chips" id="bakiChips">
+      <div class="chip active" onclick="setBakiFilter('all',this)">সবাই</div>
+      <div class="chip" onclick="setBakiFilter('customer',this)">কাস্টমার</div>
+      <div class="chip" onclick="setBakiFilter('supplier',this)">সাপ্লায়ার</div>
+      <div class="chip" onclick="setBakiFilter('pabo',this)">পাবো</div>
+      <div class="chip" onclick="setBakiFilter('debo',this)">দেবো</div>
+    </div>
+    <div class="list-card" id="bakiList"></div>
+  </section>
+
+  <!-- TAB 2: BIKROY (SALES) -->
+  <section id="tab-sales" class="hidden">
+    <div class="summary-grid">
+      <div class="sum-card green">
+        <div class="sum-label">আজকের বিক্রয়</div>
+        <div class="sum-val text-green" id="todaySales">৳ ০</div>
+      </div>
+      <div class="sum-card blue">
+        <div class="sum-label">মোট বিক্রয়</div>
+        <div class="sum-val text-blue" id="totalSales">৳ ০</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="row-between" style="margin-bottom:10px">
+        <strong>নতুন বিক্রয় এন্ট্রি</strong>
+        <button class="small-btn btn-soft-green" onclick="exportSalesCSV()">CSV রিপোর্ট</button>
+      </div>
+      <div class="field">
+        <label>পণ্য নির্বাচন (স্টক থেকে অথবা কাস্টম)</label>
+        <select id="saleStockId" onchange="onSaleStockChange()"></select>
+      </div>
+      <div class="field">
+        <label>পণ্যের নাম</label>
+        <input id="saleItemName" type="text" placeholder="পণ্যের নাম লিখুন">
+      </div>
+      <div class="dual-input">
+        <div class="field" style="margin:0"><label>পরিমাণ</label><input id="saleQty" type="number" value="1" min="1" oninput="calcSaleTotal()"></div>
+        <div class="field" style="margin:0"><label>দর (৳)</label><input id="salePrice" type="number" placeholder="০" oninput="calcSaleTotal()"></div>
+      </div>
+      <div class="dual-input" style="margin-top:8px">
+        <div class="field" style="margin:0"><label>ছাড় (৳)</label><input id="saleDiscount" type="number" value="0" oninput="calcSaleTotal()"></div>
+        <div class="field" style="margin:0"><label>ধরণ</label>
+          <select id="saleType" onchange="toggleSaleCustomer()">
+            <option value="cash">নগদ বিক্রয়</option>
+            <option value="due">বাকি বিক্রয়</option>
+          </select>
+        </div>
+      </div>
+      <div class="field hidden" id="saleCustomerWrap" style="margin-top:8px">
+        <label>কাস্টমার নির্বাচন করুন</label>
+        <select id="saleCustomerId"></select>
+      </div>
+      <div class="row-between" style="margin:10px 0">
+        <span>মোট বিল:</span>
+        <strong class="text-green" style="font-size:18px" id="saleTotalPreview">৳ ০</strong>
+      </div>
+      <button class="btn btn-green btn-block" onclick="saveSale()">বিক্রয় নিশ্চিত করুন</button>
+    </div>
+    <div class="list-card" id="salesList"></div>
+  </section>
+
+  <!-- TAB 3: KROY (PURCHASE) -->
+  <section id="tab-purchase" class="hidden">
+    <div class="summary-grid">
+      <div class="sum-card red">
+        <div class="sum-label">আজকের ক্রয়</div>
+        <div class="sum-val text-red" id="todayPurchase">৳ ০</div>
+      </div>
+      <div class="sum-card amber">
+        <div class="sum-label">মোট ক্রয়</div>
+        <div class="sum-val text-amber" id="totalPurchase">৳ ০</div>
+      </div>
+    </div>
+    <div class="card">
+      <strong style="display:block;margin-bottom:10px">নতুন ক্রয় এন্ট্রি</strong>
+      <div class="field">
+        <label>স্টকের পণ্য (অথবা নতুন পণ্য)</label>
+        <select id="purStockId" onchange="onPurStockChange()"></select>
+      </div>
+      <div class="field">
+        <label>পণ্যের নাম</label>
+        <input id="purItemName" type="text" placeholder="পণ্যের নাম লিখুন">
+      </div>
+      <div class="dual-input">
+        <div class="field" style="margin:0"><label>পরিমাণ</label><input id="purQty" type="number" value="1" min="1" oninput="calcPurTotal()"></div>
+        <div class="field" style="margin:0"><label>ক্রয় দর (৳)</label><input id="purPrice" type="number" placeholder="০" oninput="calcPurTotal()"></div>
+      </div>
+      <div class="field" style="margin-top:8px">
+        <label>পেমেন্টের ধরণ</label>
+        <select id="purType" onchange="togglePurSupplier()">
+          <option value="cash">নগদ ক্রয়</option>
+          <option value="due">বাকি ক্রয়</option>
+        </select>
+      </div>
+      <div class="field hidden" id="purSupplierWrap">
+        <label>সাপ্লায়ার নির্বাচন করুন</label>
+        <select id="purSupplierId"></select>
+      </div>
+      <div class="row-between" style="margin:10px 0">
+        <span>মোট ক্রয় মূল্য:</span>
+        <strong class="text-red" style="font-size:18px" id="purTotalPreview">৳ ০</strong>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="savePurchase()">ক্রয় নিশ্চিত করুন</button>
+    </div>
+    <div class="list-card" id="purchaseList"></div>
+  </section>
+
+  <!-- TAB 4: STOCK -->
+  <section id="tab-stock" class="hidden">
+    <div class="summary-grid">
+      <div class="sum-card blue">
+        <div class="sum-label">মোট পণ্য</div>
+        <div class="sum-val text-blue" id="stockCount">০</div>
+      </div>
+      <div class="sum-card green">
+        <div class="sum-label">মোট স্টক মূল্য</div>
+        <div class="sum-val text-green" id="stockValue">৳ ০</div>
+      </div>
+    </div>
+    <div class="search-box">
+      <input id="stockSearch" type="text" placeholder="স্টক পণ্য খুঁজুন..." oninput="renderStock()">
+      <button class="btn btn-primary" onclick="openStockModal()">+ পণ্য</button>
+    </div>
+    <div class="list-card" id="stockList"></div>
+  </section>
+
+  <!-- TAB 5: CASHBOX -->
+  <section id="tab-cashbox" class="hidden">
+    <div class="cash-hero">
+      <div class="cash-hero-top">
+        <div>
+          <div style="font-size:12.5px;opacity:0.9">বর্তমান ক্যাশবাক্স ব্যালেন্স</div>
+          <div class="cash-val" id="cashBalance">৳ ০</div>
+        </div>
+        <button class="top-btn" onclick="openCashMatchModal()">ক্যাশ মিলান</button>
+      </div>
+      <div class="row-between" style="font-size:12.5px;margin-top:8px;opacity:0.95">
+        <span>আজ ক্যাশ ইন: <strong id="todayCashIn">৳ ০</strong></span>
+        <span>আজ ক্যাশ আউট: <strong id="todayCashOut">৳ ০</strong></span>
+      </div>
+    </div>
+
+    <div class="cash-grid">
+      <div class="cash-action" onclick="openCashEntryModal('cash_sale')"><span class="ci">🛒</span>ক্যাশ বেচা</div>
+      <div class="cash-action" onclick="openCashEntryModal('cash_buy')"><span class="ci">📦</span>ক্যাশ কেনা</div>
+      <div class="cash-action" onclick="openCashEntryModal('expense')"><span class="ci">💸</span>খরচ</div>
+      <div class="cash-action" onclick="openCashEntryModal('owner_in')"><span class="ci">👤</span>মালিক দিল</div>
+      <div class="cash-action" onclick="openCashEntryModal('owner_out')"><span class="ci">🏦</span>মালিক নিল</div>
+      <div class="cash-action" onclick="exportCashCSV()"><span class="ci">📊</span>রিপোর্ট</div>
+    </div>
+
+    <div class="chips" id="cashChips">
+      <div class="chip active" onclick="setCashFilter('all',this)">সব</div>
+      <div class="chip" onclick="setCashFilter('in',this)">ক্যাশ ইন</div>
+      <div class="chip" onclick="setCashFilter('out',this)">ক্যাশ আউট</div>
+      <div class="chip" onclick="setCashFilter('expense',this)">খরচ</div>
+    </div>
+    <div class="list-card" id="cashList"></div>
+  </section>
+
+</div>
+
+<!-- FAB FOR NEW CUSTOMER -->
+<button class="fab" id="fabAddCustomer" onclick="openCustomerModal()">+ নতুন কাস্টমার</button>
+
+<!-- BOTTOM NAVIGATION -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="switchTab('baki',this)"><span class="ico">📒</span>বাকি খাতা</button>
+  <button class="nav-btn" onclick="switchTab('sales',this)"><span class="ico">🛒</span>বিক্রয়</button>
+  <button class="nav-btn" onclick="switchTab('purchase',this)"><span class="ico">🚚</span>ক্রয়</button>
+  <button class="nav-btn" onclick="switchTab('stock',this)"><span class="ico">📦</span>স্টক</button>
+  <button class="nav-btn" onclick="switchTab('cashbox',this)"><span class="ico">💰</span>ক্যাশবাক্স</button>
+</nav>
+
+<!-- CUSTOMER LEDGER SCREEN (TALLYKHATA STYLE) -->
+<div id="ledgerScreen" class="overlay-screen hidden">
+  <div class="ledger-header">
+    <div style="display:flex;align-items:center;gap:9px;min-width:0">
+      <button class="ledger-back" onclick="closeLedger()">←</button>
+      <div style="min-width:0">
+        <div id="ldName" style="font-weight:700;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+        <div id="ldBalanceText" style="font-size:12.5px;font-weight:700"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:5px">
+      <button class="small-btn btn-outline" onclick="exportSingleCustomerCSV()">রিপোর্ট</button>
+      <a id="ldCallLink" class="small-btn btn-soft-green" style="text-decoration:none">কল</a>
+      <button class="small-btn btn-outline" onclick="editCurrentCustomer()">এডিট</button>
+    </div>
+  </div>
+
+  <div class="entry-box">
+    <div class="dual-input">
+      <div class="in-box red">
+        <label class="text-red">দিলাম / বেচা (+)</label>
+        <input id="ldGiveAmt" type="number" placeholder="০" oninput="onLedgerAmtInput('give')">
+      </div>
+      <div class="in-box green">
+        <label class="text-green">পেলাম (-)</label>
+        <input id="ldGetAmt" type="number" placeholder="০" oninput="onLedgerAmtInput('get')">
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:8px">
+      <input id="ldNote" type="text" placeholder="বিবরণ লিখুন (যেমন: চাল ৫ কেজি / নগদ জমা)">
+    </div>
+    <div class="entry-meta">
+      <input id="ldDate" type="date" class="pill-btn" style="padding:4px 8px">
+      <label class="pill-btn" style="margin:0">
+        📷 ছবি
+        <input id="ldPhotoInput" type="file" accept="image/*" class="hidden" onchange="handleLedgerPhoto(this)">
+      </label>
+      <img id="ldPhotoPreview" class="tx-thumb hidden" onclick="clearLedgerPhoto()">
+      <label class="pill-btn" style="margin:0">
+        <input id="ldSmsToggle" type="checkbox"> ✉️ মেসেজ
+      </label>
+    </div>
+    <div id="ldCashCheckWrap" class="toggle-row hidden">
+      <span style="font-size:13px;font-weight:600">ক্যাশবাক্সে জমা করুন</span>
+      <input id="ldAddToCash" type="checkbox" checked>
+    </div>
+    <button id="ldSubmitBtn" class="btn btn-primary btn-block" style="margin-top:10px" onclick="saveLedgerTx()">নিশ্চিত করুন</button>
+  </div>
+
+  <div style="padding:0 12px">
+    <div style="font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:6px">লেনদেনের তালিকা</div>
+    <div class="list-card" id="ldTxList"></div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL OVERLAY -->
+<div id="adminPanel" class="overlay-screen hidden">
+  <div class="ledger-header">
+    <div style="display:flex;align-items:center;gap:9px">
+      <button class="ledger-back" onclick="closePanels()">←</button>
+      <strong>অ্যাডমিন প্যানেল</strong>
+    </div>
+    <span class="badge badge-red">সুপার অ্যাডমিন</span>
+  </div>
+  <div class="container">
+    <div class="sub-tabs">
+      <button class="sub-tab active" onclick="switchAdminTab('dash',this)">ড্যাশবোর্ড ও লগ</button>
+      <button class="sub-tab" onclick="switchAdminTab('users',this)">অ্যাডমিন ও ইউজার</button>
+      <button class="sub-tab" onclick="switchAdminTab('perms',this)">পারমিশন</button>
+      <button class="sub-tab" onclick="switchAdminTab('app',this)">অ্যাপ ও ব্যাকআপ</button>
+    </div>
+
+    <!-- Admin Tab 1 -->
+    <div id="ad-dash">
+      <div class="summary-grid">
+        <div class="sum-card blue"><div class="sum-label">মোট ইউজার/অ্যাডমিন</div><div class="sum-val text-blue" id="adUserCount">০</div></div>
+        <div class="sum-card green"><div class="sum-label">মোট কাস্টমার</div><div class="sum-val text-green" id="adCustCount">০</div></div>
+      </div>
+      <div class="card">
+        <strong style="display:block;margin-bottom:8px">লাইভ অ্যাক্টিভিটি লগ</strong>
+        <div id="adLogList"></div>
+      </div>
+    </div>
+
+    <!-- Admin Tab 2 -->
+    <div id="ad-users" class="hidden">
+      <div class="card">
+        <strong style="display:block;margin-bottom:10px">নতুন অ্যাডমিন বা ইউজার যোগ করুন</strong>
+        <div class="field"><label>নাম</label><input id="nuName" type="text" placeholder="পূর্ণ নাম"></div>
+        <div class="dual-input">
+          <div class="field" style="margin:0"><label>ইউজারনেম</label><input id="nuUser" type="text" placeholder="username"></div>
+          <div class="field" style="margin:0"><label>পাসওয়ার্ড</label><input id="nuPass" type="text" placeholder="1234"></div>
+        </div>
+        <div class="field" style="margin-top:8px">
+          <label>ভূমিকা (Role)</label>
+          <select id="nuRole">
+            <option value="user">ইউজার (স্টাফ)</option>
+            <option value="admin">অ্যাডমিন</option>
+          </select>
+        </div>
+        <button class="btn btn-primary btn-block" onclick="addAccount()">অ্যাকাউন্ট যোগ করুন</button>
+      </div>
+      <div class="list-card" id="adAccountsList"></div>
+    </div>
+
+    <!-- Admin Tab 3 -->
+    <div id="ad-perms" class="hidden">
+      <div class="card">
+        <strong style="display:block;margin-bottom:8px">ইউজার পারমিশন কন্ট্রোল</strong>
+        <div id="adPermsList"></div>
+      </div>
+    </div>
+
+    <!-- Admin Tab 4 -->
+    <div id="ad-app" class="hidden">
+      <div class="card">
+        <strong style="display:block;margin-bottom:10px">অ্যাপ ও দোকানের তথ্য আপডেট</strong>
+        <div class="field"><label>দোকানের নাম</label><input id="apShopName" type="text"></div>
+        <div class="field"><label>ফোন নম্বর</label><input id="apShopPhone" type="text"></div>
+        <div class="field"><label>ঠিকানা</label><input id="apShopAddr" type="text"></div>
+        <div class="field"><label>হোম পেজ নোটিশ (খালি রাখলে বন্ধ থাকবে)</label><input id="apNotice" type="text" placeholder="যেমন: আজ রাত ৯টায় হিসাব মিলানো হবে"></div>
+        <button class="btn btn-green btn-block" onclick="saveShopInfo()">তথ্য আপডেট করুন</button>
+      </div>
+      <div class="card">
+        <strong style="display:block;margin-bottom:10px">সম্পূর্ণ ডাটা JSON ব্যাকআপ ও রিস্টোর</strong>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button class="btn btn-blue" onclick="exportBackupJSON()">JSON ডাউনলোড</button>
+          <label class="btn btn-outline" style="margin:0">
+            JSON রিস্টোর
+            <input type="file" accept=".json" class="hidden" onchange="restoreBackupJSON(this)">
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- USER PANEL OVERLAY -->
+<div id="userPanel" class="overlay-screen hidden">
+  <div class="ledger-header">
+    <div style="display:flex;align-items:center;gap:9px">
+      <button class="ledger-back" onclick="closePanels()">←</button>
+      <strong>ইউজার প্যানেল</strong>
+    </div>
+    <span class="badge badge-blue" id="upRoleBadge">ইউজার</span>
+  </div>
+  <div class="container">
+    <div class="card">
+      <div class="row-between">
+        <div>
+          <div id="upName" style="font-size:17px;font-weight:700"></div>
+          <div id="upUsername" style="font-size:12.5px;color:var(--muted)"></div>
+        </div>
+        <span class="badge badge-green">সক্রিয়</span>
+      </div>
+      <div id="upNoticeBox" class="hidden" style="margin-top:10px;background:#FFF8E1;padding:8px 10px;border-radius:8px;font-size:12.5px"></div>
+    </div>
+    <div class="summary-grid">
+      <div class="sum-card green"><div class="sum-label">আজ আমার বিক্রয়</div><div class="sum-val text-green" id="upMySales">৳ ০</div></div>
+      <div class="sum-card blue"><div class="sum-label">আজ আমার কালেকশন</div><div class="sum-val text-blue" id="upMyColl">৳ ০</div></div>
+    </div>
+    <div class="card">
+      <strong style="display:block;margin-bottom:6px">আমার অনুমোদিত কাজের তালিকা</strong>
+      <div id="upPermsSummary" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+    <div class="card">
+      <strong style="display:block;margin-bottom:8px">নিজের পাসওয়ার্ড পরিবর্তন</strong>
+      <div class="dual-input">
+        <input id="upOldPass" type="password" placeholder="বর্তমান পাসওয়ার্ড" style="padding:9px;border:1px solid var(--border);border-radius:9px">
+        <input id="upNewPass" type="password" placeholder="নতুন পাসওয়ার্ড" style="padding:9px;border:1px solid var(--border);border-radius:9px">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="changeMyPassword()">পাসওয়ার্ড পরিবর্তন করুন</button>
+    </div>
+    <div class="card">
+      <strong style="display:block;margin-bottom:8px">আমার সাম্প্রতিক কাজ</strong>
+      <div id="upRecentLogs"></div>
+    </div>
+  </div>
+</div>
+
+<!-- GENERIC MODAL CONTAINER -->
+<div id="modalBackdrop" class="modal-backdrop hidden">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script>
+// ================= FIREBASE CONFIGURATION (FROM google-services.json) =================
+const firebaseConfig = {
+  apiKey: "AIzaSyCk8jj3keC8Of7s0qUH0FixPYomQpZ8sBM",
+  authDomain: "hishab-khata-b3043.firebaseapp.com",
+  databaseURL: "https://hishab-khata-b3043-default-rtdb.firebaseio.com",
+  projectId: "hishab-khata-b3043",
+  storageBucket: "hishab-khata-b3043.firebasestorage.app",
+  messagingSenderId: "495081496722",
+  appId: "1:495081496722:android:db824788a610981e96064b"
+};
+
+let fbDb = null;
+let fbConnected = false;
+let suppressRemote = false;
+
+function initFirebase() {
+  try {
+    if (typeof firebase !== "undefined") {
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      fbDb = firebase.database();
+      fbDb.ref(".info/connected").on("value", (snap) => {
+        fbConnected = !!snap.val();
+        updateSyncUI();
+      });
+      fbDb.ref("hishabKhataApp/state").on("value", (snap) => {
+        const remote = snap.val();
+        if (remote && !suppressRemote) {
+          if (!state.updatedAt || (remote.updatedAt && remote.updatedAt > state.updatedAt)) {
+            state = mergeDefaults(remote);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            renderAll();
+          }
+        } else if (!remote) {
+          pushToFirebase();
+        }
+      });
+    } else {
+      updateSyncUI();
+    }
+  } catch (e) {
+    console.warn("Firebase init fallback:", e);
+    updateSyncUI();
+  }
+}
+
+let pushTimer = null;
+function pushToFirebase() {
+  if (!fbDb) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(() => {
+    suppressRemote = true;
+    fbDb.ref("hishabKhataApp/state").set(state).then(() => {
+      setTimeout(() => { suppressRemote = false; }, 400);
+    }).catch(() => { suppressRemote = false; });
+  }, 250);
+}
+
+function updateSyncUI() {
+  const dot = document.getElementById("syncDot");
+  const txt = document.getElementById("syncText");
+  if (!dot || !txt) return;
+  if (fbConnected) {
+    dot.classList.remove("off");
+    txt.textContent = "Firebase অনলাইন সিঙ্ক চালু";
+  } else {
+    dot.classList.add("off");
+    txt.textContent = "অফলাইন মোড (লোকালে সেভ হচ্ছে)";
+  }
+}
+
+// ================= BANGLA UTILS =================
+const bnDigits = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+function toBn(val) {
+  return String(val).replace(/\d/g, d => bnDigits[d]);
+}
+function toEn(val) {
+  return String(val || '').replace(/[০-৯]/g, d => bnDigits.indexOf(d));
+}
+function fmtMoney(n) {
+  const num = Math.round(Number(n) || 0);
+  return '৳ ' + toBn(Math.abs(num).toLocaleString('en-IN'));
+}
+function todayISO() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('hidden');
+  clearTimeout(window._tt);
+  window._tt = setTimeout(() => t.classList.add('hidden'), 2400);
+}
+
+// ================= STATE =================
+const STORAGE_KEY = "baki_khata_pro_v4";
+function defaultState() {
+  return {
+    updatedAt: Date.now(),
+    shop: {
+      name: "আমার দোকান - বাকি খাতা",
+      phone: "01700000000",
+      address: "ঢাকা, বাংলাদেশ",
+      notice: ""
+    },
+    settings: {
+      txPasswordEnabled: true,
+      txPassword: "1234"
+    },
+    permissions: {
+      addCustomer: true,
+      addTx: true,
+      editDeleteTx: false,
+      manageStock: true,
+      useCashbox: true,
+      exportReport: true
+    },
+    accounts: [
+      { id: "acc_admin", name: "মালিক (অ্যাডমিন)", username: "admin", password: "1234", role: "admin", active: true },
+      { id: "acc_user", name: "ম্যানেজার (ইউজার)", username: "user", password: "1234", role: "user", active: true }
+    ],
+    customers: [
+      { id: "c1", name: "করিম সাহেব", phone: "01711000001", type: "customer", opening: 0, createdAt: todayISO() },
+      { id: "c2", name: "রহিম ট্রেডার্স", phone: "01811000002", type: "supplier", opening: 0, createdAt: todayISO() }
+    ],
+    ledgerTx: [
+      { id: "t1", customerId: "c1", type: "give", amount: 1500, note: "মুদি মালামাল বাকি", date: todayISO(), photo: "", by: "admin" },
+      { id: "t2", customerId: "c2", type: "get", amount: 2500, note: "পাইকারি মাল ক্রয়", date: todayISO(), photo: "", by: "admin" }
+    ],
+    stock: [
+      { id: "s1", name: "মিনিকেট চাল (কেজি)", qty: 50, buyPrice: 68, sellPrice: 75, lowAlert: 10 },
+      { id: "s2", name: "সয়াবিন তেল (১ লিটার)", qty: 24, buyPrice: 162, sellPrice: 175, lowAlert: 5 }
+    ],
+    sales: [],
+    purchases: [],
+    cashbox: [
+      { id: "cb1", type: "owner_in", dir: "in", amount: 10000, note: "প্রারম্ভিক ক্যাশ", date: todayISO(), by: "admin" }
+    ],
+    logs: [
+      { id: "l1", text: "অ্যাপ চালু হয়েছে", by: "System", time: new Date().toLocaleString('bn-BD') }
+    ]
+  };
+}
+
+function mergeDefaults(obj) {
+  const def = defaultState();
+  return {
+    ...def,
+    ...obj,
+    shop: { ...def.shop, ...(obj.shop || {}) },
+    settings: { ...def.settings, ...(obj.settings || {}) },
+    permissions: { ...def.permissions, ...(obj.permissions || {}) },
+    accounts: Array.isArray(obj.accounts) && obj.accounts.length ? obj.accounts : def.accounts,
+    customers: Array.isArray(obj.customers) ? obj.customers : [],
+    ledgerTx: Array.isArray(obj.ledgerTx) ? obj.ledgerTx : [],
+    stock: Array.isArray(obj.stock) ? obj.stock : [],
+    sales: Array.isArray(obj.sales) ? obj.sales : [],
+    purchases: Array.isArray(obj.purchases) ? obj.purchases : [],
+    cashbox: Array.isArray(obj.cashbox) ? obj.cashbox : [],
+    logs: Array.isArray(obj.logs) ? obj.logs : []
+  };
+}
+
+let state = (() => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? mergeDefaults(JSON.parse(raw)) : defaultState();
+  } catch { return defaultState(); }
+})();
+
+let currentUser = null;
+let bakiFilter = "all";
+let cashFilter = "all";
+let activeCustomerId = null;
+let pendingLedgerPhoto = "";
+
+function saveState(logText) {
+  if (logText) {
+    state.logs.unshift({
+      id: uid(),
+      text: logText,
+      by: currentUser ? currentUser.name : "System",
+      userId: currentUser ? currentUser.username : "",
+      time: new Date().toLocaleString('bn-BD')
+    });
+    if (state.logs.length > 100) state.logs = state.logs.slice(0, 100);
+  }
+  state.updatedAt = Date.now();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  pushToFirebase();
+  renderAll();
+}
+
+// ================= AUTH & PERMISSIONS =================
+function canDo(permKey) {
+  if (!currentUser) return false;
+  if (currentUser.role === 'admin') return true;
+  return !!state.permissions[permKey];
+}
+
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = toEn(document.getElementById('loginPass').value.trim());
+  const acc = state.accounts.find(a => a.username === u && toEn(a.password) === p);
+  if (!acc) return showToast("ভুল ইউজারনেম বা পাসওয়ার্ড!");
+  if (!acc.active) return showToast("এই অ্যাকাউন্টটি নিষ্ক্রিয় করা আছে!");
+  currentUser = acc;
+  sessionStorage.setItem("bk_user", acc.id);
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('panelSwitchBtn').textContent = acc.role === 'admin' ? "অ্যাডমিন" : "প্যানেল";
+  saveState(`${acc.name} লগইন করেছেন`);
+}
+
+function quickLogin(u, p) {
+  document.getElementById('loginUser').value = u;
+  document.getElementById('loginPass').value = p;
+  doLogin();
+}
+
+function doLogout() {
+  currentUser = null;
+  sessionStorage.removeItem("bk_user");
+  closePanels();
+  closeLedger();
+  document.getElementById('loginPass').value = "";
+  document.getElementById('loginScreen').classList.remove('hidden');
+}
+
+// ================= PASSWORD GUARD FOR EDIT/DELETE =================
+function requireTxPassword(callback) {
+  if (!state.settings.txPasswordEnabled) {
+    callback();
+    return;
+  }
+  openModal(`
+    <div class="modal-head"><h3>🔒 পাসওয়ার্ড যাচাই</h3><button class="close-x" onclick="closeModal()">×</button></div>
+    <p style="font-size:13px;color:var(--muted);margin-top:0">এই লেনদেন আপডেট বা ডিলিট করতে পাসওয়ার্ড দিন (ডিফল্ট: ১২৩৪)</p>
+    <div class="field"><input id="verifyPassIn" type="password" placeholder="পাসওয়ার্ড লিখুন"></div>
+    <button class="btn btn-primary btn-block" id="verifyPassBtn">যাচাই করুন</button>
+  `);
+  document.getElementById('verifyPassBtn').onclick = () => {
+    const entered = toEn(document.getElementById('verifyPassIn').value.trim());
+    if (entered === toEn(state.settings.txPassword)) {
+      closeModal();
+      callback();
+    } else {
+      showToast("ভুল পাসওয়ার্ড!");
+    }
+  };
+}
+
+// ================= NAVIGATION =================
+function switchTab(tab, btn) {
+  ['baki','sales','purchase','stock','cashbox'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('hidden', t !== tab);
+  });
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('fabAddCustomer').classList.toggle('hidden', tab !== 'baki');
+  renderAll();
+}
+
+// ================= CUSTOMER BALANCE =================
+function getCustomerBalance(cid) {
+  const c = state.customers.find(x => x.id === cid);
+  let bal = Number(c?.opening || 0);
+  state.ledgerTx.filter(t => t.customerId === cid).forEach(t => {
+    if (t.type === 'give') bal += Number(t.amount);
+    else bal -= Number(t.amount);
+  });
+  return bal; // >0 means পabo, <0 means debo
+}
+
+// ================= RENDER BAKI =================
+function setBakiFilter(f, el) {
+  bakiFilter = f;
+  document.querySelectorAll('#bakiChips .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderBaki();
+}
+
+function renderBaki() {
+  let pabo = 0, debo = 0;
+  state.customers.forEach(c => {
+    const b = getCustomerBalance(c.id);
+    if (b > 0) pabo += b;
+    else if (b < 0) debo += Math.abs(b);
+  });
+  document.getElementById('totalPabo').textContent = fmtMoney(pabo);
+  document.getElementById('totalDebo').textContent = fmtMoney(debo);
+
+  const q = (document.getElementById('bakiSearch').value || '').toLowerCase();
+  const list = state.customers.filter(c => {
+    const b = getCustomerBalance(c.id);
+    if (bakiFilter === 'customer' && c.type !== 'customer') return false;
+    if (bakiFilter === 'supplier' && c.type !== 'supplier') return false;
+    if (bakiFilter === 'pabo' && b <= 0) return false;
+    if (bakiFilter === 'debo' && b >= 0) return false;
+    return c.name.toLowerCase().includes(q) || (c.phone || '').includes(q);
+  });
+
+  const el = document.getElementById('bakiList');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty-state">কোনো কাস্টমার পাওয়া যায়নি</div>`;
+    return;
+  }
+  el.innerHTML = list.map(c => {
+    const b = getCustomerBalance(c.id);
+    const status = b > 0 ? `<span class="badge badge-green">পাবো</span>` : b < 0 ? `<span class="badge badge-red">দেবো</span>` : `<span class="badge">সমান</span>`;
+    const amtCls = b > 0 ? 'text-green' : b < 0 ? 'text-red' : '';
+    return `
+      <div class="item-row" onclick="openLedger('${c.id}')">
+        <div class="avatar ${c.type==='supplier'?'sup':''}">${c.name.charAt(0)}</div>
+        <div class="item-info">
+          <div class="item-name">${c.name}</div>
+          <div class="item-sub">${c.type==='supplier'?'সাপ্লায়ার':'কাস্টমার'} • ${toBn(c.phone || 'নম্বর নেই')}</div>
+        </div>
+        <div class="item-right">
+          <div class="item-amt ${amtCls}">${fmtMoney(b)}</div>
+          ${status}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function openCustomerModal(editId) {
+  if (!canDo('addCustomer')) return showToast("আপনার কাস্টমার যোগ করার অনুমতি নেই");
+  const c = editId ? state.customers.find(x => x.id === editId) : null;
+  openModal(`
+    <div class="modal-head"><h3>${c ? 'কাস্টমার এডিট' : 'নতুন কাস্টমার / সাপ্লায়ার'}</h3><button class="close-x" onclick="closeModal()">×</button></div>
+    <div class="field"><label>নাম *</label><input id="cmName" value="${c ? c.name : ''}" placeholder="কাস্টমারের নাম"></div>
+    <div class="field"><label>মোবাইল নম্বর</label><input id="cmPhone" value="${c ? c.phone : ''}" placeholder="017XXXXXXXX"></div>
+    <div class="field"><label>ধরণ</label>
+      <select id="cmType">
+        <option value="customer" ${c?.type==='customer'?'selected':''}>কাস্টমার</option>
+        <option value="supplier" ${c?.type==='supplier'?'selected':''}>সাপ্লায়ার</option>
+      </select>
+    </div>
+    ${!c ? `<div class="field"><label>পূর্বের বাকি (+ পাবো / - দেবো)</label><input id="cmOpening" type="number" value="0"></div>` : ''}
+    <button class="btn btn-primary btn-block" onclick="saveCustomer('${editId || ''}')">সংরক্ষণ করুন</button>
+    ${c ? `<button class="btn btn-soft-red btn-block" style="margin-top:8px" onclick="deleteCustomer('${c.id}')">কাস্টমার ডিলিট করুন</button>` : ''}
+  `);
+}
+
+function saveCustomer(editId) {
+  const name = document.getElementById('cmName').value.trim();
+  const phone = document.getElementById('cmPhone').value.trim();
+  const type = document.getElementById('cmType').value;
+  if (!name) return showToast("নাম লিখুন");
+  if (editId) {
+    const c = state.customers.find(x => x.id === editId);
+    if (c) { c.name = name; c.phone = phone; c.type = type; }
+    closeModal();
+    saveState(`কাস্টমার আপডেট: ${name}`);
+    if (activeCustomerId === editId) renderLedger();
+  } else {
+    const opening = Number(document.getElementById('cmOpening').value || 0);
+    state.customers.unshift({ id: uid(), name, phone, type, opening, createdAt: todayISO() });
+    closeModal();
+    saveState(`নতুন ${type==='supplier'?'সাপ্লায়ার':'কাস্টমার'}: ${name}`);
+  }
+}
+
+function deleteCustomer(cid) {
+  if (!canDo('editDeleteTx')) return showToast("ডিলিট করার অনুমতি নেই");
+  requireTxPassword(() => {
+    const c = state.customers.find(x => x.id === cid);
+    state.customers = state.customers.filter(x => x.id !== cid);
+    state.ledgerTx = state.ledgerTx.filter(t => t.customerId !== cid);
+    closeModal();
+    closeLedger();
+    saveState(`কাস্টমার ডিলিট: ${c?.name || ''}`);
+  });
+}
+
+// ================= CUSTOMER LEDGER (TALLYKHATA STYLE) =================
+function openLedger(cid) {
+  activeCustomerId = cid;
+  pendingLedgerPhoto = "";
+  document.getElementById('ldGiveAmt').value = "";
+  document.getElementById('ldGetAmt').value = "";
+  document.getElementById('ldNote').value = "";
+  document.getElementById('ldDate').value = todayISO();
+  document.getElementById('ldPhotoPreview').classList.add('hidden');
+  document.getElementById('ldCashCheckWrap').classList.add('hidden');
+  document.getElementById('ledgerScreen').classList.remove('hidden');
+  renderLedger();
+}
+
+function closeLedger() {
+  activeCustomerId = null;
+  document.getElementById('ledgerScreen').classList.add('hidden');
+}
+
+function editCurrentCustomer() {
+  if (activeCustomerId) openCustomerModal(activeCustomerId);
+}
+
+function onLedgerAmtInput(which) {
+  const give = document.getElementById('ldGiveAmt');
+  const get = document.getElementById('ldGetAmt');
+  const cashWrap = document.getElementById('ldCashCheckWrap');
+  const btn = document.getElementById('ldSubmitBtn');
+  if (which === 'give' && give.value) {
+    get.value = "";
+    cashWrap.classList.add('hidden');
+    btn.className = "btn btn-primary btn-block";
+    btn.textContent = `বাকি দিলাম ${fmtMoney(give.value)} — নিশ্চিত করুন`;
+  } else if (which === 'get' && get.value) {
+    give.value = "";
+    cashWrap.classList.remove('hidden');
+    btn.className = "btn btn-green btn-block";
+    btn.textContent = `জমা পেলাম ${fmtMoney(get.value)} — নিশ্চিত করুন`;
+  } else {
+    cashWrap.classList.add('hidden');
+    btn.className = "btn btn-primary btn-block";
+    btn.textContent = "নিশ্চিত করুন";
+  }
+}
+
+function handleLedgerPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxW = 360;
+      const scale = Math.min(1, maxW / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      pendingLedgerPhoto = canvas.toDataURL('image/jpeg', 0.65);
+      const prev = document.getElementById('ldPhotoPreview');
+      prev.src = pendingLedgerPhoto;
+      prev.classList.remove('hidden');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearLedgerPhoto() {
+  pendingLedgerPhoto = "";
+  document.getElementById('ldPhotoPreview').classList.add('hidden');
+  document.getElementById('ldPhotoInput').value = "";
+}
+
+function saveLedgerTx() {
+  if (!canDo('addTx')) return showToast("লেনদেন যোগ করার অনুমতি নেই");
+  const give = Number(document.getElementById('ldGiveAmt').value || 0);
+  const get = Number(document.getElementById('ldGetAmt').value || 0);
+  if (give <= 0 && get <= 0) return showToast("টাকার পরিমাণ লিখুন");
+  const type = give > 0 ? 'give' : 'get';
+  const amount = give > 0 ? give : get;
+  const note = document.getElementById('ldNote').value.trim() || (type === 'give' ? 'বাকি / বেচা' : 'জমা / পেলাম');
+  const date = document.getElementById('ldDate').value || todayISO();
+  const c = state.customers.find(x => x.id === activeCustomerId);
+
+  state.ledgerTx.unshift({
+    id: uid(), customerId: activeCustomerId, type, amount, note, date,
+    photo: pendingLedgerPhoto, by: currentUser?.username || 'admin'
+  });
+
+  if (type === 'get' && document.getElementById('ldAddToCash').checked) {
+    state.cashbox.unshift({
+      id: uid(), type: 'collection', dir: 'in', amount,
+      note: `বাকি আদায়: ${c?.name || ''}`, date, by: currentUser?.username || 'admin'
+    });
+  }
+
+  const sendSms = document.getElementById('ldSmsToggle').checked;
+  saveState(`${c?.name}: ${type==='give'?'দিলাম':'পেলাম'} ${fmtMoney(amount)}`);
+
+  if (sendSms && c?.phone) {
+    const newBal = getCustomerBalance(activeCustomerId);
+    const msg = `${state.shop.name}: ${type==='give'?'বাকি':'জমা'} ${fmtMoney(amount)} (${note})। বর্তমান ${newBal>=0?'বাকি':'অগ্রিম'}: ${fmtMoney(newBal)}।`;
+    window.location.href = `sms:${c.phone}?body=${encodeURIComponent(msg)}`;
+  }
+
+  document.getElementById('ldGiveAmt').value = "";
+  document.getElementById('ldGetAmt').value = "";
+  document.getElementById('ldNote').value = "";
+  clearLedgerPhoto();
+  onLedgerAmtInput('');
+  renderLedger();
+  showToast("লেনদেন সংরক্ষিত হয়েছে");
+}
+
+function renderLedger() {
+  const c = state.customers.find(x => x.id === activeCustomerId);
+  if (!c) return;
+  const bal = getCustomerBalance(c.id);
+  document.getElementById('ldName').textContent = c.name;
+  const bt = document.getElementById('ldBalanceText');
+  bt.textContent = bal > 0 ? `মোট পাবো: ${fmtMoney(bal)}` : bal < 0 ? `মোট দেবো: ${fmtMoney(bal)}` : `হিসাব সমান (৳ ০)`;
+  bt.className = bal > 0 ? 'text-green' : bal < 0 ? 'text-red' : '';
+  const callLink = document.getElementById('ldCallLink');
+  callLink.href = c.phone ? `tel:${c.phone}` : 'javascript:void(0)';
+
+  const txs = state.ledgerTx.filter(t => t.customerId === c.id);
+  const el = document.getElementById('ldTxList');
+  if (!txs.length) {
+    el.innerHTML = `<div class="empty-state">এখনো কোনো লেনদেন নেই</div>`;
+    return;
+  }
+  el.innerHTML = txs.map(t => `
+    <div class="item-row" style="cursor:default">
+      <div class="item-info">
+        <div class="item-name">${t.note}</div>
+        <div class="item-sub">${toBn(t.date)} • ${t.type==='give'?'দিলাম / বেচা':'পেলাম'}</div>
+        <div style="margin-top:5px;display:flex;gap:6px">
+          <button class="small-btn btn-outline" onclick="editLedgerTx('${t.id}')">এডিট</button>
+          <button class="small-btn btn-soft-red" onclick="deleteLedgerTx('${t.id}')">ডিলিট</button>
+        </div>
+      </div>
+      ${t.photo ? `<img src="${t.photo}" class="tx-thumb" onclick="viewPhoto('${t.id}')">` : ''}
+      <div class="item-right">
+        <div class="item-amt ${t.type==='give'?'text-red':'text-green'}">${t.type==='give'?'+':'-'} ${fmtMoney(t.amount)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function viewPhoto(txId) {
+  const t = state.ledgerTx.find(x => x.id === txId);
+  if (!t?.photo) return;
+  openModal(`<div class="modal-head"><h3>সংযুক্ত ছবি</h3><button class="close-x" onclick="closeModal()">×</button></div><img src="${t.photo}" style="width:100%;border-radius:10px">`);
+}
+
+function editLedgerTx(txId) {
+  if (!canDo('editDeleteTx')) return showToast("আপনার এডিট করার অনুমতি নেই");
+  const t = state.ledgerTx.find(x => x.id === txId);
+  if (!t) return;
+  requireTxPassword(() => {
+    openModal(`
+      <div class="modal-head"><h3>লেনদেন এডিট</h3><button class="close-x" onclick="closeModal()">×</button></div>
+      <div class="field"><label>ধরণ</label>
+        <select id="etType">
+          <option value="give" ${t.type==='give'?'selected':''}>দিলাম / বেচা</option>
+          <option value="get" ${t.type==='get'?'selected':''}>পেলাম</option>
+        </select>
+      </div>
+      <div class="field"><label>টাকা</label><input id="etAmt" type="number" value="${t.amount}"></div>
+      <div class="field"><label>বিবরণ</label><input id="etNote" value="${t.note}"></div>
+      <div class="field"><label>তারিখ</label><input id="etDate" type="date" value="${t.date}"></div>
+      <button class="btn btn-primary btn-block" onclick="confirmEditLedgerTx('${t.id}')">আপডেট করুন</button>
+    `);
+  });
+}
+
+function confirmEditLedgerTx(txId) {
+  const t = state.ledgerTx.find(x => x.id === txId);
+  if (!t) return;
+  t.type = document.getElementById('etType').value;
+  t.amount = Number(document.getElementById('etAmt').value || 0);
+  t.note = document.getElementById('etNote').value.trim();
+  t.date = document.getElementById('etDate').value;
+  closeModal();
+  saveState(`লেজার লেনদেন এডিট: ${fmtMoney(t.amount)}`);
+  renderLedger();
+}
+
+function deleteLedgerTx(txId) {
+  if (!canDo('editDeleteTx')) return showToast("আপনার ডিলিট করার অনুমতি নেই");
+  requireTxPassword(() => {
+    state.ledgerTx = state.ledgerTx.filter(x => x.id !== txId);
+    saveState("লেজার লেনদেন ডিলিট করা হয়েছে");
+    renderLedger();
+  });
+}
+
+// ================= SALES MODULE =================
+function renderSales() {
+  const today = todayISO();
+  const tSum = state.sales.filter(s => s.date === today).reduce((a,b)=>a+Number(b.total),0);
+  const allSum = state.sales.reduce((a,b)=>a+Number(b.total),0);
+  document.getElementById('todaySales').textContent = fmtMoney(tSum);
+  document.getElementById('totalSales').textContent = fmtMoney(allSum);
+
+  document.getElementById('saleStockId').innerHTML =
+    `<option value="">-- কাস্টম পণ্য --</option>` +
+    state.stock.map(s => `<option value="${s.id}">${s.name} (স্টক: ${toBn(s.qty)} | ${fmtMoney(s.sellPrice)})</option>`).join('');
+  document.getElementById('saleCustomerId').innerHTML =
+    state.customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+  const el = document.getElementById('salesList');
+  if (!state.sales.length) { el.innerHTML = `<div class="empty-state">কোনো বিক্রয় এন্ট্রি নেই</div>`; return; }
+  el.innerHTML = state.sales.map(s => `
+    <div class="item-row" style="cursor:default">
+      <div class="item-info">
+        <div class="item-name">${s.itemName} (${toBn(s.qty)} পিস)</div>
+        <div class="item-sub">${toBn(s.date)} • ${s.payType==='cash'?'নগদ':'বাকি'} ${s.customerName?('• '+s.customerName):''}</div>
+      </div>
+      <div class="item-right">
+        <div class="item-amt text-green">${fmtMoney(s.total)}</div>
+        <button class="small-btn btn-soft-red" onclick="deleteSale('${s.id}')">ডিলিট</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function onSaleStockChange() {
+  const id = document.getElementById('saleStockId').value;
+  const s = state.stock.find(x => x.id === id);
+  if (s) {
+    document.getElementById('saleItemName').value = s.name;
+    document.getElementById('salePrice').value = s.sellPrice;
+    calcSaleTotal();
+  }
+}
+function toggleSaleCustomer() {
+  document.getElementById('saleCustomerWrap').classList.toggle('hidden', document.getElementById('saleType').value !== 'due');
+}
+function calcSaleTotal() {
+  const q = Number(document.getElementById('saleQty').value || 0);
+  const p = Number(document.getElementById('salePrice').value || 0);
+  const d = Number(document.getElementById('saleDiscount').value || 0);
+  const tot = Math.max(0, q * p - d);
+  document.getElementById('saleTotalPreview').textContent = fmtMoney(tot);
+  return tot;
+}
+function saveSale() {
+  if (!canDo('addTx')) return showToast("বিক্রয় এন্ট্রির অনুমতি নেই");
+  const stockId = document.getElementById('saleStockId').value;
+  const itemName = document.getElementById('saleItemName').value.trim();
+  const qty = Number(document.getElementById('saleQty').value || 0);
+  const price = Number(document.getElementById('salePrice').value || 0);
+  const discount = Number(document.getElementById('saleDiscount').value || 0);
+  const payType = document.getElementById('saleType').value;
+  const total = Math.max(0, qty * price - discount);
+  if (!itemName || total <= 0) return showToast("সঠিক পণ্যের নাম ও দর দিন");
+
+  let customerId = "", customerName = "";
+  if (payType === 'due') {
+    customerId = document.getElementById('saleCustomerId').value;
+    const c = state.customers.find(x => x.id === customerId);
+    if (!c) return showToast("কাস্টমার নির্বাচন করুন");
+    customerName = c.name;
+    state.ledgerTx.unshift({
+      id: uid(), customerId, type: 'give', amount: total,
+      note: `বাকি বিক্রয়: ${itemName} (${toBn(qty)})`, date: todayISO(), photo: "", by: currentUser?.username || 'admin'
+    });
+  } else {
+    state.cashbox.unshift({
+      id: uid(), type: 'cash_sale', dir: 'in', amount: total,
+      note: `ক্যাশ বেচা: ${itemName}`, date: todayISO(), by: currentUser?.username || 'admin'
+    });
+  }
+
+  if (stockId) {
+    const st = state.stock.find(x => x.id === stockId);
+    if (st) st.qty = Math.max(0, Number(st.qty) - qty);
+  }
+
+  state.sales.unshift({
+    id: uid(), stockId, itemName, qty, price, discount, total, payType, customerId, customerName,
+    date: todayISO(), by: currentUser?.username || 'admin'
+  });
+
+  document.getElementById('saleItemName').value = "";
+  document.getElementById('salePrice').value = "";
+  document.getElementById('saleDiscount').value = "0";
+  calcSaleTotal();
+  saveState(`বিক্রয়: ${itemName} (${fmtMoney(total)})`);
+  showToast("বিক্রয় সম্পন্ন হয়েছে");
+}
+
+function deleteSale(id) {
+  if (!canDo('editDeleteTx')) return showToast("ডিলিট করার অনুমতি নেই");
+  requireTxPassword(() => {
+    state.sales = state.sales.filter(s => s.id !== id);
+    saveState("বিক্রয় এন্ট্রি ডিলিট করা হয়েছে");
+  });
+}
+
+// ================= PURCHASE MODULE =================
+function renderPurchase() {
+  const today = todayISO();
+  const tSum = state.purchases.filter(p => p.date === today).reduce((a,b)=>a+Number(b.total),0);
+  const allSum = state.purchases.reduce((a,b)=>a+Number(b.total),0);
+  document.getElementById('todayPurchase').textContent = fmtMoney(tSum);
+  document.getElementById('totalPurchase').textContent = fmtMoney(allSum);
+
+  document.getElementById('purStockId').innerHTML =
+    `<option value="">-- নতুন / কাস্টম পণ্য --</option>` +
+    state.stock.map(s => `<option value="${s.id}">${s.name} (ক্রয় দর: ${fmtMoney(s.buyPrice)})</option>`).join('');
+  const sups = state.customers.filter(c => c.type === 'supplier');
+  const pool = sups.length ? sups : state.customers;
+  document.getElementById('purSupplierId').innerHTML =
+    pool.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+  const el = document.getElementById('purchaseList');
+  if (!state.purchases.length) { el.innerHTML = `<div class="empty-state">কোনো ক্রয় এন্ট্রি নেই</div>`; return; }
+  el.innerHTML = state.purchases.map(p => `
+    <div class="item-row" style="cursor:default">
+      <div class="item-info">
+        <div class="item-name">${p.itemName} (${toBn(p.qty)} পিস)</div>
+        <div class="item-sub">${toBn(p.date)} • ${p.payType==='cash'?'নগদ':'বাকি'} ${p.supplierName?('• '+p.supplierName):''}</div>
+      </div>
+      <div class="item-right">
+        <div class="item-amt text-red">${fmtMoney(p.total)}</div>
+        <button class="small-btn btn-soft-red" onclick="deletePurchase('${p.id}')">ডিলিট</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function onPurStockChange() {
+  const id = document.getElementById('purStockId').value;
+  const s = state.stock.find(x => x.id === id);
+  if (s) {
+    document.getElementById('purItemName').value = s.name;
+    document.getElementById('purPrice').value = s.buyPrice;
+    calcPurTotal();
+  }
+}
+function togglePurSupplier() {
+  document.getElementById('purSupplierWrap').classList.toggle('hidden', document.getElementById('purType').value !== 'due');
+}
+function calcPurTotal() {
+  const q = Number(document.getElementById('purQty').value || 0);
+  const p = Number(document.getElementById('purPrice').value || 0);
+  const tot = q * p;
+  document.getElementById('purTotalPreview').textContent = fmtMoney(tot);
+  return tot;
+}
+function savePurchase() {
+  if (!canDo('addTx')) return showToast("ক্রয় এন্ট্রির অনুমতি নেই");
+  const stockId = document.getElementById('purStockId').value;
+  const itemName = document.getElementById('purItemName').value.trim();
+  const qty = Number(document.getElementById('purQty').value || 0);
+  const price = Number(document.getElementById('purPrice').value || 0);
+  const payType = document.getElementById('purType').value;
+  const total = qty * price;
+  if (!itemName || total <= 0) return showToast("সঠিক পণ্যের নাম ও দর দিন");
+
+  let supplierId = "", supplierName = "";
+  if (payType === 'due') {
+    supplierId = document.getElementById('purSupplierId').value;
+    const sup = state.customers.find(x => x.id === supplierId);
+    if (!sup) return showToast("সাপ্লায়ার নির্বাচন করুন");
+    supplierName = sup.name;
+    state.ledgerTx.unshift({
+      id: uid(), customerId: supplierId, type: 'get', amount: total,
+      note: `বাকি ক্রয়: ${itemName} (${toBn(qty)})`, date: todayISO(), photo: "", by: currentUser?.username || 'admin'
+    });
+  } else {
+    state.cashbox.unshift({
+      id: uid(), type: 'cash_buy', dir: 'out', amount: total,
+      note: `ক্যাশ কেনা: ${itemName}`, date: todayISO(), by: currentUser?.username || 'admin'
+    });
+  }
+
+  if (stockId) {
+    const st = state.stock.find(x => x.id === stockId);
+    if (st) { st.qty = Number(st.qty) + qty; st.buyPrice = price; }
+  } else {
+    state.stock.unshift({ id: uid(), name: itemName, qty, buyPrice: price, sellPrice: Math.round(price * 1.12), lowAlert: 5 });
+  }
+
+  state.purchases.unshift({
+    id: uid(), stockId, itemName, qty, price, total, payType, supplierId, supplierName,
+    date: todayISO(), by: currentUser?.username || 'admin'
+  });
+
+  document.getElementById('purItemName').value = "";
+  document.getElementById('purPrice').value = "";
+  calcPurTotal();
+  saveState(`ক্রয়: ${itemName} (${fmtMoney(total)})`);
+  showToast("ক্রয় সম্পন্ন হয়েছে");
+}
+
+function deletePurchase(id) {
+  if (!canDo('editDeleteTx')) return showToast("ডিলিট করার অনুমতি নেই");
+  requireTxPassword(() => {
+    state.purchases = state.purchases.filter(p => p.id !== id);
+    saveState("ক্রয় এন্ট্রি ডিলিট করা হয়েছে");
+  });
+}
+
+// ================= STOCK MODULE =================
+function renderStock() {
+  const q = (document.getElementById('stockSearch').value || '').toLowerCase();
+  const totalVal = state.stock.reduce((a,s) => a + (Number(s.qty) * Number(s.buyPrice)), 0);
+  document.getElementById('stockCount').textContent = toBn(state.stock.length);
+  document.getElementById('stockValue').textContent = fmtMoney(totalVal);
+
+  const list = state.stock.filter(s => s.name.toLowerCase().includes(q));
+  const el = document.getElementById('stockList');
+  if (!list.length) { el.innerHTML = `<div class="empty-state">কোনো পণ্য নেই</div>`; return; }
+  el.innerHTML = list.map(s => {
+    const low = Number(s.qty) <= Number(s.lowAlert || 5);
+    return `
+      <div class="item-row" style="cursor:default">
+        <div class="item-info">
+          <div class="item-name">${s.name} ${low?'<span class="badge badge-red">কম স্টক</span>':''}</div>
+          <div class="item-sub">ক্রয়: ${fmtMoney(s.buyPrice)} • বিক্রয়: ${fmtMoney(s.sellPrice)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="small-btn btn-outline" onclick="adjStock('${s.id}',-1)">-</button>
+          <strong style="min-width:26px;text-align:center">${toBn(s.qty)}</strong>
+          <button class="small-btn btn-outline" onclick="adjStock('${s.id}',1)">+</button>
+          <button class="small-btn btn-soft-green" onclick="openStockModal('${s.id}')">এডিট</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function adjStock(id, delta) {
+  if (!canDo('manageStock')) return showToast("স্টক পরিবর্তনের অনুমতি নেই");
+  const s = state.stock.find(x => x.id === id);
+  if (!s) return;
+  s.qty = Math.max(0, Number(s.qty) + delta);
+  saveState(`স্টক আপডেট: ${s.name} (${toBn(s.qty)})`);
+}
+
+function openStockModal(editId) {
+  if (!canDo('manageStock')) return showToast("স্টক ম্যানেজ করার অনুমতি নেই");
+  const s = editId ? state.stock.find(x => x.id === editId) : null;
+  openModal(`
+    <div class="modal-head"><h3>${s?'পণ্য এডিট':'নতুন স্টক পণ্য'}</h3><button class="close-x" onclick="closeModal()">×</button></div>
+    <div class="field"><label>পণ্যের নাম</label><input id="stName" value="${s?s.name:''}"></div>
+    <div class="dual-input">
+      <div class="field" style="margin:0"><label>পরিমাণ</label><input id="stQty" type="number" value="${s?s.qty:0}"></div>
+      <div class="field" style="margin:0"><label>কম স্টক অ্যালার্ট</label><input id="stLow" type="number" value="${s?s.lowAlert:5}"></div>
+    </div>
+    <div class="dual-input" style="margin-top:8px">
+      <div class="field" style="margin:0"><label>ক্রয় দর (৳)</label><input id="stBuy" type="number" value="${s?s.buyPrice:0}"></div>
+      <div class="field" style="margin:0"><label>বিক্রয় দর (৳)</label><input id="stSell" type="number" value="${s?s.sellPrice:0}"></div>
+    </div>
+    <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="saveStockItem('${editId||''}')">সংরক্ষণ করুন</button>
+  `);
+}
+
+function saveStockItem(editId) {
+  const name = document.getElementById('stName').value.trim();
+  const qty = Number(document.getElementById('stQty').value || 0);
+  const lowAlert = Number(document.getElementById('stLow').value || 5);
+  const buyPrice = Number(document.getElementById('stBuy').value || 0);
+  const sellPrice = Number(document.getElementById('stSell').value || 0);
+  if (!name) return showToast("পণ্যের নাম দিন");
+  if (editId) {
+    const s = state.stock.find(x => x.id === editId);
+    if (s) Object.assign(s, { name, qty, lowAlert, buyPrice, sellPrice });
+  } else {
+    state.stock.unshift({ id: uid(), name, qty, lowAlert, buyPrice, sellPrice });
+  }
+  closeModal();
+  saveState(`স্টক পণ্য সংরক্ষণ: ${name}`);
+}
+
+// ================= CASHBOX MODULE =================
+const cashTypeLabels = {
+  cash_sale: "ক্যাশ বেচা",
+  cash_buy: "ক্যাশ কেনা",
+  expense: "খরচ",
+  owner_in: "মালিক দিল",
+  owner_out: "মালিক নিল",
+  collection: "বাকি আদায়",
+  match: "ক্যাশ মিলানো"
+};
+
+function getCashBalance() {
+  return state.cashbox.reduce((a, c) => a + (c.dir === 'in' ? Number(c.amount) : -Number(c.amount)), 0);
+}
+
+function setCashFilter(f, el) {
+  cashFilter = f;
+  document.querySelectorAll('#cashChips .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderCashbox();
+}
+
+function renderCashbox() {
+  const today = todayISO();
+  const bal = getCashBalance();
+  const tIn = state.cashbox.filter(c => c.date === today && c.dir === 'in').reduce((a,b)=>a+Number(b.amount),0);
+  const tOut = state.cashbox.filter(c => c.date === today && c.dir === 'out').reduce((a,b)=>a+Number(b.amount),0);
+  document.getElementById('cashBalance').textContent = fmtMoney(bal);
+  document.getElementById('todayCashIn').textContent = fmtMoney(tIn);
+  document.getElementById('todayCashOut').textContent = fmtMoney(tOut);
+
+  const list = state.cashbox.filter(c => {
+    if (cashFilter === 'in') return c.dir === 'in';
+    if (cashFilter === 'out') return c.dir === 'out';
+    if (cashFilter === 'expense') return c.type === 'expense';
+    return true;
+  });
+
+  const el = document.getElementById('cashList');
+  if (!list.length) { el.innerHTML = `<div class="empty-state">কোনো ক্যাশবাক্স এন্ট্রি নেই</div>`; return; }
+  el.innerHTML = list.map(c => `
+    <div class="item-row" style="cursor:default">
+      <div class="item-info">
+        <div class="item-name">${c.note || cashTypeLabels[c.type] || 'লেনদেন'}</div>
+        <div class="item-sub">${toBn(c.date)} • ${cashTypeLabels[c.type] || c.type}</div>
+      </div>
+      <div class="item-right">
+        <div class="item-amt ${c.dir==='in'?'text-green':'text-red'}">${c.dir==='in'?'+':'-'} ${fmtMoney(c.amount)}</div>
+        <button class="small-btn btn-soft-red" onclick="deleteCashTx('${c.id}')">ডিলিট</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openCashEntryModal(type) {
+  if (!canDo('useCashbox')) return showToast("ক্যাশবাক্স ব্যবহারের অনুমতি নেই");
+  const dir = (type === 'cash_sale' || type === 'owner_in') ? 'in' : 'out';
+  const quickExp = type === 'expense' ? `
+    <div class="chips" style="margin-bottom:8px">
+      ${['দোকান ভাড়া','বিদ্যুৎ বিল','কর্মচারী বেতন','নাস্তা','পরিবহন'].map(x => `<div class="chip" onclick="document.getElementById('cbNote').value='${x}'">${x}</div>`).join('')}
+    </div>` : '';
+  openModal(`
+    <div class="modal-head"><h3>${cashTypeLabels[type]}</h3><button class="close-x" onclick="closeModal()">×</button></div>
+    ${quickExp}
+    <div class="field"><label>টাকার পরিমাণ (৳)</label><input id="cbAmt" type="number" placeholder="০"></div>
+    <div class="field"><label>বিবরণ</label><input id="cbNote" placeholder="বিবরণ লিখুন"></div>
+    <div class="field"><label>তারিখ</label><input id="cbDate" type="date" value="${todayISO()}"></div>
+    <button class="btn ${dir==='in'?'btn-green':'btn-primary'} btn-block" onclick="saveCashEntry('${type}','${dir}')">নিশ্চিত করুন</button>
+  `);
+}
+
+function saveCashEntry(type, dir) {
+  const amount = Number(document.getElementById('cbAmt').value || 0);
+  const note = document.getElementById('cbNote').value.trim() || cashTypeLabels[type];
+  const date = document.getElementById('cbDate').value || todayISO();
+  if (amount <= 0) return showToast("সঠিক পরিমাণ দিন");
+  state.cashbox.unshift({ id: uid(), type, dir, amount, note, date, by: currentUser?.username || 'admin' });
+  closeModal();
+  saveState(`ক্যাশবাক্স (${cashTypeLabels[type]}): ${fmtMoney(amount)}`);
+}
+
+function openCashMatchModal() {
+  if (!canDo('useCashbox')) return showToast("অনুমতি নেই");
+  const cur = getCashBalance();
+  openModal(`
+    <div class="modal-head"><h3>ক্যাশ মিলান</h3><button class="close-x" onclick="closeModal()">×</button></div>
+    <p style="font-size:13px;color:var(--muted)">অ্যাপ অনুযায়ী বর্তমান ক্যাশ: <strong>${fmtMoney(cur)}</strong></p>
+    <div class="field"><label>বাক্সে আসল টাকা আছে (৳)</label><input id="realCashIn" type="number" value="${cur}"></div>
+    <button class="btn btn-green btn-block" onclick="confirmCashMatch()">সমন্বয় করুন</button>
+  `);
+}
+
+function confirmCashMatch() {
+  const real = Number(document.getElementById('realCashIn').value || 0);
+  const diff = real - getCashBalance();
+  if (diff === 0) { closeModal(); return showToast("ক্যাশবাক্স একদম মিলে আছে!"); }
+  state.cashbox.unshift({
+    id: uid(), type: 'match', dir: diff > 0 ? 'in' : 'out', amount: Math.abs(diff),
+    note: `ক্যাশ মিলানো সমন্বয় (${diff>0?'বেশি':'কম'})`, date: todayISO(), by: currentUser?.username || 'admin'
+  });
+  closeModal();
+  saveState(`ক্যাশ মিলানো: ${fmtMoney(real)}`);
+}
+
+function deleteCashTx(id) {
+  if (!canDo('editDeleteTx')) return showToast("ডিলিট করার অনুমতি নেই");
+  requireTxPassword(() => {
+    state.cashbox = state.cashbox.filter(c => c.id !== id);
+    saveState("ক্যাশবাক্স এন্ট্রি ডিলিট করা হয়েছে");
+  });
+}
+
+// ================= SETTINGS MODAL =================
+function openSettingsModal() {
+  openModal(`
+    <div class="modal-head"><h3>⚙️ সেটিংস ও পাসওয়ার্ড সুরক্ষা</h3><button class="close-x" onclick="closeModal()">×</button></div>
+    <div class="toggle-row" style="border-top:none;margin-top:0">
+      <div>
+        <strong>লেনদেন আপডেট/ডিলিট পাসওয়ার্ড</strong>
+        <div style="font-size:12px;color:var(--muted)">চালু থাকলে এডিট/ডিলিটে পাসওয়ার্ড চাইবে</div>
+      </div>
+      <input type="checkbox" id="stPassToggle" ${state.settings.txPasswordEnabled?'checked':''} onchange="toggleTxPass(this)">
+    </div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+      <strong style="display:block;margin-bottom:8px">লেনদেন পাসওয়ার্ড পরিবর্তন</strong>
+      <div class="field"><input id="stCurPass" type="password" placeholder="বর্তমান পাসওয়ার্ড"></div>
+      <div class="field"><input id="stNewPass" type="password" placeholder="নতুন পাসওয়ার্ড"></div>
+      <button class="btn btn-primary btn-block" onclick="updateTxPassword()">পাসওয়ার্ড আপডেট করুন</button>
+    </div>
+  `);
+}
+
+function toggleTxPass(cb) {
+  if (!cb.checked && state.settings.txPasswordEnabled) {
+    cb.checked = true;
+    requireTxPassword(() => {
+      state.settings.txPasswordEnabled = false;
+      saveState("লেনদেন পাসওয়ার্ড সুরক্ষা বন্ধ করা হয়েছে");
+      showToast("সুরক্ষা বন্ধ হয়েছে");
+    });
+  } else {
+    state.settings.txPasswordEnabled = true;
+    saveState("লেনদেন পাসওয়ার্ড সুরক্ষা চালু করা হয়েছে");
+    showToast("সুরক্ষা চালু হয়েছে");
+  }
+}
+
+function updateTxPassword() {
+  const cur = toEn(document.getElementById('stCurPass').value.trim());
+  const nw = toEn(document.getElementById('stNewPass').value.trim());
+  if (cur !== toEn(state.settings.txPassword)) return showToast("বর্তমান পাসওয়ার্ড সঠিক নয়");
+  if (!nw) return showToast("নতুন পাসওয়ার্ড দিন");
+  state.settings.txPassword = nw;
+  closeModal();
+  saveState("লেনদেন পাসওয়ার্ড পরিবর্তন করা হয়েছে");
+  showToast("পাসওয়ার্ড আপডেট হয়েছে");
+}
+
+// ================= ADMIN & USER PANELS =================
+function openRolePanel() {
+  if (!currentUser) return;
+  if (currentUser.role === 'admin') {
+    document.getElementById('adminPanel').classList.remove('hidden');
+    renderAdminPanel();
+  } else {
+    document.getElementById('userPanel').classList.remove('hidden');
+    renderUserPanel();
+  }
+}
+
+function closePanels() {
+  document.getElementById('adminPanel').classList.add('hidden');
+  document.getElementById('userPanel').classList.add('hidden');
+}
+
+function switchAdminTab(tab, btn) {
+  ['dash','users','perms','app'].forEach(t => {
+    document.getElementById('ad-' + t).classList.toggle('hidden', t !== tab);
+  });
+  document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderAdminPanel();
+}
+
+const permLabels = {
+  addCustomer: "নতুন কাস্টমার যোগ",
+  addTx: "বাকি/বিক্রয়/ক্রয় এন্ট্রি",
+  editDeleteTx: "লেনদেন এডিট ও ডিলিট",
+  manageStock: "স্টক আপডেট",
+  useCashbox: "ক্যাশবাক্স এন্ট্রি",
+  exportReport: "CSV রিপোর্ট ডাউনলোড"
+};
+
+function renderAdminPanel() {
+  document.getElementById('adUserCount').textContent = toBn(state.accounts.length);
+  document.getElementById('adCustCount').textContent = toBn(state.customers.length);
+  document.getElementById('adLogList').innerHTML = state.logs.slice(0, 20).map(l => `
+    <div style="padding:7px 0;border-bottom:1px solid #F3F4F6;font-size:12.5px">
+      <strong>${l.text}</strong>
+      <div style="color:var(--muted);font-size:11.5px">${l.by} • ${l.time}</div>
+    </div>`).join('');
+
+  document.getElementById('adAccountsList').innerHTML = state.accounts.map(a => `
+    <div class="item-row" style="cursor:default">
+      <div class="item-info">
+        <div class="item-name">${a.name} <span class="badge ${a.role==='admin'?'badge-red':'badge-blue'}">${a.role==='admin'?'অ্যাডমিন':'ইউজার'}</span></div>
+        <div class="item-sub">ইউজারনেম: ${a.username} • ${a.active?'সক্রিয়':'নিষ্ক্রিয়'}</div>
+      </div>
+      <div style="display:flex;gap:5px">
+        ${a.id !== currentUser.id ? `
+          <button class="small-btn btn-outline" onclick="toggleAccountActive('${a.id}')">${a.active?'বন্ধ':'চালু'}</button>
+          <button class="small-btn btn-soft-red" onclick="deleteAccount('${a.id}')">ডিলিট</button>
+        ` : '<span class="badge badge-green">আপনি</span>'}
+      </div>
+    </div>`).join('');
+
+  document.getElementById('adPermsList').innerHTML = Object.keys(permLabels).map(k => `
+    <div class="toggle-row">
+      <span>${permLabels[k]}</span>
+      <input type="checkbox" ${state.permissions[k]?'checked':''} onchange="setPerm('${k}',this.checked)">
+    </div>`).join('');
+
+  document.getElementById('apShopName').value = state.shop.name || '';
+  document.getElementById('apShopPhone').value = state.shop.phone || '';
+  document.getElementById('apShopAddr').value = state.shop.address || '';
+  document.getElementById('apNotice').value = state.shop.notice || '';
+}
+
+function addAccount() {
+  const name = document.getElementById('nuName').value.trim();
+  const username = document.getElementById('nuUser').value.trim();
+  const password = toEn(document.getElementById('nuPass').value.trim());
+  const role = document.getElementById('nuRole').value;
+  if (!name || !username || !password) return showToast("সব ঘর পূরণ করুন");
+  if (state.accounts.some(a => a.username === username)) return showToast("এই ইউজারনেম আগেই আছে");
+  state.accounts.push({ id: uid(), name, username, password, role, active: true });
+  document.getElementById('nuName').value = "";
+  document.getElementById('nuUser').value = "";
+  document.getElementById('nuPass').value = "";
+  saveState(`নতুন ${role==='admin'?'অ্যাডমিন':'ইউজার'} যোগ: ${name}`);
+  renderAdminPanel();
+}
+
+function toggleAccountActive(id) {
+  const a = state.accounts.find(x => x.id === id);
+  if (a) a.active = !a.active;
+  saveState(`অ্যাকাউন্ট স্ট্যাটাস পরিবর্তন: ${a?.name}`);
+  renderAdminPanel();
+}
+
+function deleteAccount(id) {
+  state.accounts = state.accounts.filter(x => x.id !== id);
+  saveState("অ্যাকাউন্ট ডিলিট করা হয়েছে");
+  renderAdminPanel();
+}
+
+function setPerm(key, val) {
+  state.permissions[key] = val;
+  saveState(`ইউজার পারমিশন আপডেট: ${permLabels[key]}`);
+}
+
+function saveShopInfo() {
+  state.shop.name = document.getElementById('apShopName').value.trim() || "বাকি খাতা";
+  state.shop.phone = document.getElementById('apShopPhone').value.trim();
+  state.shop.address = document.getElementById('apShopAddr').value.trim();
+  state.shop.notice = document.getElementById('apNotice').value.trim();
+  saveState("অ্যাপ ও দোকানের তথ্য আপডেট করা হয়েছে");
+  showToast("তথ্য আপডেট সম্পন্ন");
+}
+
+function renderUserPanel() {
+  if (!currentUser) return;
+  document.getElementById('upName').textContent = currentUser.name;
+  document.getElementById('upUsername').textContent = `ইউজারনেম: ${currentUser.username}`;
+  const nb = document.getElementById('upNoticeBox');
+  if (state.shop.notice) {
+    nb.textContent = "📢 অ্যাডমিন নোটিশ: " + state.shop.notice;
+    nb.classList.remove('hidden');
+  } else nb.classList.add('hidden');
+
+  const today = todayISO();
+  const mySales = state.sales.filter(s => s.date === today && s.by === currentUser.username).reduce((a,b)=>a+Number(b.total),0);
+  const myColl = state.ledgerTx.filter(t => t.date === today && t.type === 'get' && t.by === currentUser.username).reduce((a,b)=>a+Number(b.amount),0);
+  document.getElementById('upMySales').textContent = fmtMoney(mySales);
+  document.getElementById('upMyColl').textContent = fmtMoney(myColl);
+
+  document.getElementById('upPermsSummary').innerHTML = Object.keys(permLabels).map(k =>
+    `<span class="badge ${state.permissions[k]?'badge-green':'badge-red'}">${state.permissions[k]?'✓':'✕'} ${permLabels[k]}</span>`
+  ).join('');
+
+  const myLogs = state.logs.filter(l => l.userId === currentUser.username).slice(0, 12);
+  document.getElementById('upRecentLogs').innerHTML = myLogs.length ? myLogs.map(l => `
+    <div style="padding:6px 0;border-bottom:1px solid #F3F4F6;font-size:12.5px">
+      ${l.text} <div style="color:var(--muted);font-size:11px">${l.time}</div>
+    </div>`).join('') : '<div class="empty-state">কোনো সাম্প্রতিক কাজ নেই</div>';
+}
+
+function changeMyPassword() {
+  const oldP = toEn(document.getElementById('upOldPass').value.trim());
+  const newP = toEn(document.getElementById('upNewPass').value.trim());
+  if (oldP !== toEn(currentUser.password)) return showToast("বর্তমান পাসওয়ার্ড ভুল");
+  if (!newP) return showToast("নতুন পাসওয়ার্ড লিখুন");
+  const acc = state.accounts.find(a => a.id === currentUser.id);
+  if (acc) acc.password = newP;
+  currentUser.password = newP;
+  document.getElementById('upOldPass').value = "";
+  document.getElementById('upNewPass').value = "";
+  saveState(`${currentUser.name} পাসওয়ার্ড পরিবর্তন করেছেন`);
+  showToast("পাসওয়ার্ড পরিবর্তন হয়েছে");
+}
+
+// ================= EXPORTS & BACKUP (ANDROID BRIDGE + BROWSER) =================
+function downloadFile(filename, content, mime) {
+  if (window.AndroidBridge && typeof window.AndroidBridge.saveFile === 'function') {
+    window.AndroidBridge.saveFile(filename, content, mime);
+    return;
+  }
+  const blob = new Blob(["\uFEFF" + content], { type: mime });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+function exportBakiCSV() {
+  if (!canDo('exportReport')) return showToast("রিপোর্ট ডাউনলোডের অনুমতি নেই");
+  let csv = "নাম,মোবাইল,ধরণ,ব্যালেন্স\n";
+  state.customers.forEach(c => { csv += `"${c.name}","${c.phone||''}","${c.type}",${getCustomerBalance(c.id)}\n`; });
+  downloadFile(`baki-khata-${todayISO()}.csv`, csv, "text/csv;charset=utf-8");
+}
+
+function exportSingleCustomerCSV() {
+  const c = state.customers.find(x => x.id === activeCustomerId);
+  if (!c) return;
+  let csv = "তারিখ,ধরণ,টাকা,বিবরণ\n";
+  state.ledgerTx.filter(t => t.customerId === c.id).forEach(t => {
+    csv += `${t.date},${t.type==='give'?'দিলাম':'পেলাম'},${t.amount},"${t.note}"\n`;
+  });
+  downloadFile(`${c.name}-ledger.csv`, csv, "text/csv;charset=utf-8");
+}
+
+function exportSalesCSV() {
+  if (!canDo('exportReport')) return showToast("অনুমতি নেই");
+  let csv = "তারিখ,পণ্য,পরিমাণ,মোট,ধরণ\n";
+  state.sales.forEach(s => { csv += `${s.date},"${s.itemName}",${s.qty},${s.total},${s.payType}\n`; });
+  downloadFile(`sales-${todayISO()}.csv`, csv, "text/csv;charset=utf-8");
+}
+
+function exportCashCSV() {
+  if (!canDo('exportReport')) return showToast("অনুমতি নেই");
+  let csv = "তারিখ,খাত,দিক,টাকা,বিবরণ\n";
+  state.cashbox.forEach(c => { csv += `${c.date},${cashTypeLabels[c.type]||c.type},${c.dir},${c.amount},"${c.note}"\n`; });
+  downloadFile(`cashbox-${todayISO()}.csv`, csv, "text/csv;charset=utf-8");
+}
+
+function exportBackupJSON() {
+  downloadFile(`hishab-khata-backup-${todayISO()}.json`, JSON.stringify(state, null, 2), "application/json");
+}
+
+function restoreBackupJSON(input) {
+  const f = input.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      state = mergeDefaults(parsed);
+      saveState("JSON ব্যাকআপ রিস্টোর করা হয়েছে");
+      showToast("ব্যাকআপ রিস্টোর সফল হয়েছে");
+    } catch { showToast("সঠিক JSON ফাইল নয়"); }
+  };
+  r.readAsText(f);
+}
+
+// ================= MODAL & ANDROID BACK =================
+function openModal(html) {
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalBackdrop').classList.remove('hidden');
+}
+function closeModal() {
+  document.getElementById('modalBackdrop').classList.add('hidden');
+}
+
+window.handleAndroidBack = function() {
+  if (!document.getElementById('modalBackdrop').classList.contains('hidden')) { closeModal(); return true; }
+  if (!document.getElementById('ledgerScreen').classList.contains('hidden')) { closeLedger(); return true; }
+  if (!document.getElementById('adminPanel').classList.contains('hidden')) { closePanels(); return true; }
+  if (!document.getElementById('userPanel').classList.contains('hidden')) { closePanels(); return true; }
+  return false;
+};
+
+// ================= RENDER ALL =================
+function renderAll() {
+  document.getElementById('topShopName').textContent = state.shop.name || "বাকি খাতা";
+  document.getElementById('loginShopTitle').textContent = state.shop.name || "বাকি খাতা";
+  const nb = document.getElementById('homeNoticeBar');
+  if (state.shop.notice) {
+    document.getElementById('homeNoticeText').textContent = state.shop.notice;
+    nb.classList.remove('hidden');
+  } else nb.classList.add('hidden');
+
+  renderBaki();
+  renderSales();
+  renderPurchase();
+  renderStock();
+  renderCashbox();
+}
+
+// ================= BOOT =================
+window.addEventListener('DOMContentLoaded', () => {
+  initFirebase();
+  const savedUid = sessionStorage.getItem("bk_user");
+  if (savedUid) {
+    const acc = state.accounts.find(a => a.id === savedUid && a.active);
+    if (acc) {
+      currentUser = acc;
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('panelSwitchBtn').textContent = acc.role === 'admin' ? "অ্যাডমিন" : "প্যানেল";
+    }
+  }
+  renderAll();
+});
+</script>
+</body>
+</html>
